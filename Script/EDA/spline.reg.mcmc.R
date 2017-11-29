@@ -101,22 +101,25 @@ spline.reg.mcmc <- function(seal, n.iter, lambda){
     
     ### Sample sigma_j^2
     for (j in 1:J){
-      if (length(unlist(ind.ls[j])) == 1) {
-        s <- as.numeric(S[unlist(ind.ls[j]), ])
-        x <- X[unlist(ind.ls[j]), ]
-        R <- matrix(unlist(R.v[unlist(ind.ls[j])]), 2, 2, byrow = TRUE)
-        a.1.tmp <- 1 + a.1
-        a.2.tmp <- sum(t(s - beta0 - get.full(x)%*%beta)%*%solve(R)%*%(s - beta0 - get.full(x)%*%beta)) + a.2
+      if (length(unlist(ind.ls[j])) == 0) {
+        sigma2[j] <- 0 
       } else {
-        s.j <- as.list(as.data.frame(t(S[unlist(ind.ls[j]), ])))
-        x.j <- as.list(as.data.frame(t(X[unlist(ind.ls[j]), ])))
-        R.j <- R.v[unlist(ind.ls[j])]
-        a.1.tmp <- length(unlist(ind.ls[j])) + a.1
-        a.2.tmp <- sum(mapply(function(s, R, x) t(s - beta0 - get.full(x)%*%beta)%*%solve(R)%*%(s - beta0 - get.full(x)%*%beta),
-                              s = s.j, R = R.j, x = x.j)) + a.2
+        if (length(unlist(ind.ls[j])) == 1) {
+          s <- as.numeric(S[unlist(ind.ls[j]), ])
+          x <- X[unlist(ind.ls[j]), ]
+          R <- matrix(unlist(R.v[unlist(ind.ls[j])]), 2, 2, byrow = TRUE)
+          a.1.tmp <- 1 + a.1
+          a.2.tmp <- sum(t(s - beta0 - get.full(x)%*%beta)%*%solve(R)%*%(s - beta0 - get.full(x)%*%beta)) + a.2
+        } else {
+          s.j <- as.list(as.data.frame(t(S[unlist(ind.ls[j]), ])))
+          x.j <- as.list(as.data.frame(t(X[unlist(ind.ls[j]), ])))
+          R.j <- R.v[unlist(ind.ls[j])]
+          a.1.tmp <- length(unlist(ind.ls[j])) + a.1
+          a.2.tmp <- sum(mapply(function(s, R, x) t(s - beta0 - get.full(x)%*%beta)%*%solve(R)%*%(s - beta0 - get.full(x)%*%beta),
+                                s = s.j, R = R.j, x = x.j)) + a.2
+        }
+        sigma2[j] <- 1/rgamma(1, shape = a.1.tmp, rate = a.2.tmp)
       }
-      
-      sigma2[j] <- 1/rgamma(1, shape = a.1.tmp, rate = a.2.tmp)
       sigma2.v[unlist(ind.ls[j])] <- sigma2[j]
     }
     sigma2.save[, k] <- sigma2
@@ -231,7 +234,7 @@ spline.reg.mcmc <- function(seal, n.iter, lambda){
   ####
   mcmc.out <- list(beta0 = beta0.save, beta = beta.save, psi = psi.save, p = p.save, 
                    c = c.save, sigma2 = sigma2.save, W = W.save, S.pred = S.pred.save,
-                   DIC = DIC, mse = mse.save)
+                   DIC = DIC)
   
   return (mcmc.out)
 }
